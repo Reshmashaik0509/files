@@ -1,0 +1,99 @@
+version: '3.7'
+
+services:
+
+  cache:
+    build:
+      context: cache
+      dockerfile: Dockerfile
+    privileged: true
+    mem_limit: ${CACHE_MEM_LIMIT}
+    restart: on-failure
+    volumes:
+      - ${APP_FILES_TMP_PATH}:/tmp
+      - ${LOGGING_FILE_PATH}:/logs
+    network_mode: host
+    command: ["redis-server", "--maxmemory", "${CACHE_JVM_OPTS}"]
+    environment:
+      - APP_FILES_TMP_PATH
+      - CACHE_JVM_OPTS
+      - CACHE_MEM_LIMIT
+
+  tejasv23:
+    build:
+      context: tejasv23
+      dockerfile: Dockerfile
+    mem_limit: ${V23_MEM_LIMIT}
+    restart: on-failure
+    volumes:
+      - ${APP_FILES_TMP_PATH}:/tmp
+      - ${LOGGING_FILE_PATH}:/logs
+      - ${APP_FILES_PATH}:/data
+    depends_on:
+      - cache
+    network_mode: host
+    environment:
+      - DATASOURCE_URL
+      - DATASOURCE_USERNAME
+      - DATASOURCE_PASSWORD
+      - APP_HOST
+      - APP_PORT
+      - APP_URL
+      - APP_DOMAIN
+      - CACHE_MEM_LIMIT
+      - CACHE_JVM_OPTS
+      - V23_MEM_LIMIT
+      - V23_JVM_OPTS
+      - APP_DEPLOYMENT_NAME
+      - APP_DEPLOYMENT_URL
+      - APP_DEPLOYMENT_TOKEN
+      - APP_DEPLOYMENT_ADMIN_NAME
+      - APP_DEPLOYMENT_ADMIN_CONTACT
+      - APP_DEPLOYMENT_ADMIN_EMAIL
+      - APP_JWT_SECRET
+      - APP_COMMUNICATION_MAIL_FROM
+      - APP_COMMUNICATION_MAIL_HOST
+      - APP_COMMUNICATION_MAIL_PORT
+      - APP_COMMUNICATION_MAIL_USER
+      - APP_COMMUNICATION_MAIL_PASS
+      - APP_COMMUNICATION_MAIL_TLS
+      - APP_COMMUNICATION_MAIL_DEBUG
+      - APP_COMMUNICATION_MAIL_AUTH
+      - APP_USER_RESTRICT_EMAILS
+      - APP_USER_VALID_EMAILS
+      - APP_USER_REGISTRATION_ENABLED
+      - APP_USER_ACTIVE_ON_REGISTER
+      - APP_USER_EMAIL_ACTIVATION_ALLOWED
+      - APP_USER_PARICHAY_SERVICE_NAME
+      - APP_USER_PARICHAY_PROXY_URL
+      - APP_USER_LOCKOUT_TIME
+      - APP_USER_LOCKOUT_ATTEMPTS
+      - APP_ACCOUNT_ACTIVATED_ON_REGISTER
+      - APP_SECURITY_AUTHENTICATION_JWT_TOKEN_VALIDITY_IN_MINUTES_FOR_REMEMBER_ME
+      - APP_SECURITY_AUTHENTICATION_JWT_TOKEN_VALIDITY_IN_MINUTES
+      - APP_SCHEDULER_ENABLED
+      - APP_ADDONS_TRANSLATION_ENABLED
+      - APP_ADDONS_TRANSLATION_URL
+      - APP_ADDONS_FORECAST_ENABLED
+      - APP_ADDONS_FORECAST_URL
+      - APP_ADDONS_NL_QUERY_ENABLED
+      - APP_ADDONS_NL_QUERY_URL
+
+  ui:
+    build:
+      context: ui
+      dockerfile: Dockerfile
+    mem_limit: ${UI_MEM_LIMIT}
+    restart: on-failure
+    volumes:
+      - ${APP_FILES_TMP_PATH}:/tmp
+      - ${LOGGING_FILE_PATH}:/logs
+      - ./ui/templates:/etc/nginx/templates
+    depends_on:
+      - tejasv23
+    network_mode: host
+    environment:
+      - APP_FILES_TMP_PATH
+      - APP_PORT
+      - APP_HOST
+      - APP_DOMAIN
